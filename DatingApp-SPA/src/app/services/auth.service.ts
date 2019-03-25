@@ -17,6 +17,9 @@ export class AuthService {
   currentUser: User;
   photoUrl = new BehaviorSubject<string>('../../assets/user.png');
   currentPhotoUrl = this.photoUrl.asObservable();
+  private roles = new BehaviorSubject([]);
+  public roles$ = this.roles.asObservable();
+
 
   constructor(private httpClient: HttpClient) { }
 
@@ -34,6 +37,7 @@ export class AuthService {
             localStorage.setItem('user', JSON.stringify(user.user));
             this.decodedToken = this.jwtHelper.decodeToken(user.token);
             this.currentUser = user.user;
+            this.setRoles(this.decodedToken.role);
             this.changeMemberPhoto(this.currentUser.photoUrl);
           }
         })
@@ -47,13 +51,34 @@ export class AuthService {
           const user = response;
           if (user) {
             localStorage.setItem('token', user.token);
+            localStorage.setItem('user', JSON.stringify(user.user));
+            this.decodedToken = this.jwtHelper.decodeToken(user.token);
+            this.currentUser = user.user;
+            this.setRoles(this.decodedToken.role);
+            this.changeMemberPhoto(this.currentUser.photoUrl);
           }
         })
       );
   }
 
+  setRoles(roles: any[]) {
+    this.roles.next(roles);
+  }
+
   loggedIn() {
     const token = localStorage.getItem('token');
     return !this.jwtHelper.isTokenExpired(token);
+  }
+
+  roleMatch(allowedRoles): boolean {
+    let isMatch = false;
+    const userRoles = this.decodedToken.role as Array<string>;
+    allowedRoles.forEach(element => {
+      if (userRoles.includes(element)) {
+        isMatch = true;
+        return;
+      }
+    });
+    return isMatch;
   }
 }
