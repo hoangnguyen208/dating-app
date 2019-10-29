@@ -8,24 +8,24 @@ namespace DatingApp.API.Data
 {
     public class Seed
     {
-        private readonly UserManager<User> _userManager;
-        private readonly RoleManager<Role> _roleManager;
+        // private readonly UserManager<User> _userManager;
+        // private readonly RoleManager<Role> _roleManager;
 
-        // private readonly DataContext _context;
-        public Seed(
-            UserManager<User> userManager,
-            RoleManager<Role> roleManager
-            // DataContext context
-        )
-        {
-            _userManager = userManager;
-            _roleManager = roleManager;
-            // _context = context;
-        }
+        // // private readonly DataContext _context;
+        // public Seed(
+        //     UserManager<User> userManager,
+        //     RoleManager<Role> roleManager
+        //     // DataContext context
+        // )
+        // {
+        //     _userManager = userManager;
+        //     _roleManager = roleManager;
+        //     // _context = context;
+        // }
 
-        public void SeedUsers()
+        public static void SeedUsers(UserManager<User> userManager, RoleManager<Role> roleManager)
         {
-            if (!_userManager.Users.Any())
+            if (!userManager.Users.Any())
             {
                 var userData = System.IO.File.ReadAllText("Data/UserSeedData.json");
                 var users = JsonConvert.DeserializeObject<List<User>>(userData);
@@ -40,14 +40,14 @@ namespace DatingApp.API.Data
 
                 foreach (var role in roles)
                 {
-                    _roleManager.CreateAsync(role).Wait();
+                    roleManager.CreateAsync(role).Wait();
                 }
 
                 foreach(var user in users)
                 {
                     user.Photos.SingleOrDefault().IsApproved = true;
-                    _userManager.CreateAsync(user, "password").Wait();
-                    _userManager.AddToRoleAsync(user, "Member").Wait();
+                    userManager.CreateAsync(user, "password").Wait();
+                    userManager.AddToRoleAsync(user, "Member").Wait();
 
                     // byte[] passwordHash, passwordSalt;
                     // CreatePasswordHash("password", out passwordHash, out passwordSalt);
@@ -63,19 +63,19 @@ namespace DatingApp.API.Data
                     UserName = "Admin"
                 };
 
-                IdentityResult result = _userManager.CreateAsync(adminUser, "password").Result;
+                IdentityResult result = userManager.CreateAsync(adminUser, "password").Result;
 
                 if (result.Succeeded)
                 {
-                    User admin = _userManager.FindByNameAsync("Admin").Result;
-                    _userManager.AddToRolesAsync(admin, new[] { "Admin", "Moderator" }).Wait();
+                    User admin = userManager.FindByNameAsync("Admin").Result;
+                    userManager.AddToRolesAsync(admin, new[] { "Admin", "Moderator" }).Wait();
                 }
 
                 // _context.SaveChanges();
             }
         }
 
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac = new System.Security.Cryptography.HMACSHA512())
             {
